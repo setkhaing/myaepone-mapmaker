@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Meta Tags -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leaflet Shapefile Uploader with Enhanced Styling</title>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
+    
+    <!-- Font Awesome CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <!-- Introduction Modal -->
+    <div id="intro-modal-new" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2><i class="fas fa-heart"></i> Welcome!</h2>
+            <p>This tool was created with <i class="fas fa-heart"></i> love and passion.</p>
+            <button id="start-button-new" class="btn"><i class="fas fa-play"></i> Start</button>
+        </div>
+    </div>
+
+    <!-- Menu Bar -->
+    <div id="menu-bar">
+        <div id="logo-container">
+            <img src="img/Myaepone_logo.png" alt="Logo" id="logo">
+        </div>
+        <div id="button-container">
+            <div id="upload-container" class="container">
+                <input type="file" id="shapefile-input" multiple hidden>
+                <label for="shapefile-input" id="upload-button" class="menu-button">
+                    <i class="fas fa-upload"></i>
+                    <span class="tooltip">Upload Shapefiles</span> <!-- Tooltip -->
+                </label>
+            </div>
+            <div id="open-data-container" class="container">
+                <button id="open-data-button" class="menu-button">
+                    <i class="fas fa-database"></i>
+                    <span class="tooltip">Open Data MM</span> <!-- Tooltip -->
+                </button>
+            </div>
+            <div id="basemap-container" class="container">
+                <button id="basemap-button" class="menu-button">
+                    <i class="fas fa-map"></i>
+                    <span class="tooltip">Add Basemap</span> <!-- Tooltip -->
+                </button>
+            </div>
+            <div id="attributes-container" class="container">
+                <button id="attributes-button" class="menu-button">
+                    <i class="fas fa-table"></i>
+                    <span class="tooltip">Show Attributes</span> <!-- Tooltip -->
+                </button>
+            </div>
+            <div id="query-layer-container" class="container">
+                <button id="query-layer-button" class="menu-button">
+                    <i class="fas fa-search"></i>
+                    <span class="tooltip">Query Layer</span> <!-- Tooltip -->
+                </button>
+            </div>
+           
+          </div>
+    </div>   
+  
+    <!-- Floating Text Editor (hidden by default, will show above the selected text box) -->
+<div id="text-editor" class="text-editor">
+    <input type="number" id="font-size" value="14" min="8" max="72">
+    <input type="color" id="font-color" value="#000000">
+    <button id="bold-button"><b>B</b></button>
+    <button id="italic-button"><i>I</i></button>
+    <button id="underline-button"><u>U</u></button>
+    <select id="text-align">
+        <option value="left">Left</option>
+        <option value="center">Center</option>
+        <option value="right">Right</option>
+    </select>
+    <button class="delete-button" id="delete-textbox">Delete Text Box</button>
+</div>
+
+    <!-- Map Container -->
+    <div id="map-container">
+        <div id="map"></div>
+
+        <!-- Layer Control -->
+        <div id="layer-control">
+            <div id="layer-control-header">
+                <i class="fas fa-layer-group"></i> Layers
+                <i class="fas fa-chevron-down" id="toggle-icon"></i>
+            </div>
+            <div id="layer-control-content"></div>
+        </div>
+    </div>
+
+
+    <!-- Basemap Modal -->
+    <div id="basemap-modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Select a Basemap</h2>
+            <div class="basemap-options">
+                <div class="basemap-option" data-layer="streets">
+                    <i class="fas fa-road"></i>
+                    <p>Streets</p>
+                </div>
+                <div class="basemap-option" data-layer="dark">
+                    <i class="fas fa-moon"></i>
+                    <p>Dark</p>
+                </div>
+                <div class="basemap-option" data-layer="light">
+                    <i class="fas fa-sun"></i>
+                    <p>Light</p>
+                </div>
+                <div class="basemap-option" data-layer="satellite">
+                    <i class="fas fa-globe"></i>
+                    <p>Satellite</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Attributes Modal -->
+    <div id="attributes-modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Attributes Table</h2>
+            <div class="dropdown-container">
+                <label for="layer-select">Select Layer:</label>
+                <select id="layer-select" class="dropdown">
+                    <!-- Options will be dynamically populated -->
+                </select>
+            </div>
+            <div id="attributes-table-container">
+                <table id="attributes-table">
+                    <!-- Table content will be dynamically populated -->
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Styling Modal -->
+    <div id="styling-modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Layer Styling</h2>
+            <div id="styling-options-container" class="styling-options">
+                <label for="styling-type">Choose Styling Type:</label>
+                <select id="styling-type" class="dropdown">
+                    <option value="single">Single Styling</option>
+                    <option value="categories">Categories Styling</option>
+                </select>
+                
+                <!-- Single Styling Options -->
+                <div id="single-styling-options" class="styling-options">
+                    <div class="input-group">
+                        <label for="border-color">Border Color</label>
+                        <input type="color" id="border-color">
+                    </div>
+                    <div class="input-group">
+                        <label for="border-width">Border Width</label>
+                        <input type="number" id="border-width" min="1" max="10">
+                    </div>
+                    <div class="input-group">
+                        <label for="fill-color">Fill Color</label>
+                        <input type="color" id="fill-color">
+                    </div>
+                    <div class="input-group">
+                        <label for="fill-opacity">Fill Opacity</label>
+                        <input type="range" id="fill-opacity" min="0" max="1" step="0.1">
+                    </div>
+                    <div class="input-group">
+                        <label for="point-size">Point Size</label>
+                        <input type="number" id="point-size" min="1" max="20">
+                    </div>
+                </div>
+
+                <!-- Categories Styling Options -->
+                <div id="categories-styling-options" class="styling-options hidden">
+                    <div class="input-group">
+                        <label for="column-name">Column Name</label>
+                        <select id="column-name"></select>
+                    </div>
+                    <div id="categories-list">
+                        <!-- Categories and their styles will be dynamically inserted here -->
+                    </div>
+                </div>
+            </div>
+            <button id="apply-styling">Apply</button>
+        </div>
+    </div>
+
+    <!-- Open Data MM Modal -->
+    <div id="open-data-modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Select Data Layers</h2>
+            <div id="data-grid" class="data-grid">
+                <!-- Data layers will be dynamically inserted here -->
+            </div>
+            <button id="add-to-map-button" class="btn">Add Selected Layers to Map</button>
+        </div>
+    </div>
+
+    <!-- Query Layer Modal -->
+    <div id="query-layer-modal" class="modal hidden">
+        <div class="modal-content">
+          <span class="close">&times;</span>
+          <h2>Query Layer</h2>
+          
+          <!-- Layer dropdown -->
+          <div class="dropdown-container">
+            <label for="query-layer-select">Select Layer:</label>
+            <select id="query-layer-select" class="dropdown">
+              <!-- Dynamically populated -->
+            </select>
+          </div>
+          
+          <!-- Condition input -->
+          <div class="query-container">
+            <label for="query-property">Select Property:</label>
+            <select id="query-property" class="dropdown">
+              <!-- Dynamically populated -->
+            </select>
+            
+            <label for="query-operator">Operator:</label>
+            <select id="query-operator" class="dropdown">
+              <option value="=">=</option>
+              <option value="!=">!=</option>
+              <option value=">">></option>
+              <option value="<"><</option>
+              <option value="LIKE">LIKE</option>
+            </select>
+      
+            <label for="query-value">Value:</label>
+            <input type="text" id="query-value" class="input">
+            
+            <button id="add-condition-button" class="btn">Add Condition</button>
+          </div>
+      
+          <!-- Display added conditions -->
+          <div id="query-conditions-container">
+            <!-- Conditions will be dynamically inserted here -->
+          </div>
+          
+          <!-- Apply query button -->
+          <button id="apply-query-button">Apply Query</button>
+        </div>
+      </div>   
+
+<!-- Shape Styling Modal -->
+<div id="shape-style-modal" class="modal hidden">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h2>Shape Styling Options</h2>
+      
+      <div class="input-group">
+        <label for="shape-stroke-color">Stroke Color</label>
+        <input type="color" id="shape-stroke-color" value="#3388ff">
+      </div>
+  
+      <div class="input-group">
+        <label for="shape-stroke-width">Stroke Width</label>
+        <input type="number" id="shape-stroke-width" value="2" min="1" max="10">
+      </div>
+  
+      <div class="input-group">
+        <label for="shape-fill-color">Fill Color</label>
+        <input type="color" id="shape-fill-color" value="#3388ff">
+      </div>
+  
+      <div class="input-group">
+        <label for="shape-fill-opacity">Fill Opacity</label>
+        <input type="range" id="shape-fill-opacity" value="1" min="0" max="1" step="0.1">
+      </div>
+    </div>
+  </div>
+  
+      
+    <!-- Legend -->
+    <div id="legend">
+        <h3>Legend</h3>
+        <div id="legend-content"></div>
+    </div>
+    
+    <!-- Include Scripts in Correct Order -->
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+    <!-- Shapefile JS -->
+    <script src="https://unpkg.com/shpjs/dist/shp.min.js"></script>
+    <!-- Turf.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Turf.js/6.5.0/turf.min.js"></script>
+    
+    <!-- Custom Scripts -->
+    <script src="map.js"></script>
+    <script src="text.js"></script>
+    <script src="styling.js"></script>
+    <script src="attributes.js"></script>
+    <script src="ui.js"></script>
+    
+
+</body>
+</html>
